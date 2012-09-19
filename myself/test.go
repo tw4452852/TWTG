@@ -2,10 +2,11 @@ package main
 
 import (
 	"fmt"
-	"./greetings"
+	"./fibo"
 )
 
 func main() {
-	var a int64
-	fmt.Printf("Size of int is %d\n", unsafe.Sizeof(a))
+	for i := 0; i < 100; i++ {
+		fmt.Println(i, " is ", fibo.Fibonacci(i))
+	}
 }
