@@ -2,11 +2,13 @@ package main
 
 import (
 	"fmt"
-	"./fibo"
+	"./stack"
 )
 
 func main() {
-	for i := 0; i < 100; i++ {
-		fmt.Println(i, " is ", fibo.Fibonacci(i))
-	}
+	s := stack.NewStack()
+
+	s.Push(1)
+	s.Push("hello tw")
+	fmt.Println(s)
 }
