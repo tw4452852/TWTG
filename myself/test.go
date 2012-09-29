@@ -150,12 +150,54 @@ func buildLazy(fn func(uint64, uint64) uint64, i1, i2 uint64) func() uint64 {
 	}
 }
 
-func main() {
-	fib := buildLazy(func(i, j uint64) uint64 {
-		return i + j
-	}, 0, 1)
+type Request struct {
+	a, b	int
+	replyc	chan int
+}
 
-	for i := 0; i < 100; i++ {
-		fmt.Println(fib())
+func (r *Request)String() string {
+	return fmt.Sprintf("%d+%d=%d", r.a, r.b, <-r.replyc)
+}
+
+type binOp func(a, b int) int
+
+func run(op binOp, req *Request)  {
+	req.replyc <- op(req.a, req.b)
+}
+
+func server(op binOp, service chan *Request, quit chan bool)  {
+	for {
+		select {
+		case req := <-service:
+			go run(op, req)
+		case <-quit:
+			return
+		}
 	}
+}
+
+func startServer(op binOp) (service chan *Request, quit chan bool) {
+	service = make(chan *Request)
+	quit = make(chan bool)
+	go server(op, service, quit)
+	return service, quit
+}
+
+func main() {
+	adder, quit := startServer(func(a, b int) int {return a + b})
+	const N = 10000000
+	var reqs [N]Request
+	for i := 0; i < N; i++ {
+		req := &reqs[i]
+		req.a = i
+		req.b = i + N
+		req.replyc = make(chan int)
+		adder <- req
+	}
+
+	for i := N - 1; i >= 0; i-- {
+		fmt.Println(&reqs[i])
+	}
+	quit <- true
+	fmt.Println("done")
 }
